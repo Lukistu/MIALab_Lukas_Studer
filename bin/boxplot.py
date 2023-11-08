@@ -9,7 +9,7 @@ def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
-        file_path = "../copy/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
         #df = pd.read_csv(r"results.csv", delimiter=';')
         df = pd.read_csv(file_path, delimiter=';')
 
