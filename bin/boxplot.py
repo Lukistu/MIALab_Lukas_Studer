@@ -4,12 +4,12 @@ import pandas as pd
 import csv
 import seaborn as sns
 
-
+#test
 def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
-        file_path = "../MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        file_path = "../copy/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
         #df = pd.read_csv(r"results.csv", delimiter=';')
         df = pd.read_csv(file_path, delimiter=';')
 
