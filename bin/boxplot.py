@@ -9,7 +9,7 @@ def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
-        file_path = "../MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
         #df = pd.read_csv(r"results.csv", delimiter=';')
         df = pd.read_csv(file_path, delimiter=';')
 
@@ -57,16 +57,43 @@ def main():
     plt.show()
 
 
+    #PLOTTING BOTH
+
+    # Read the data into a list
+    labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
+    filtered_df = df[df['LABEL'].isin(labels)]
+
+    # Set up the figure and subplots
+    fig, axes = plt.subplots(nrows=2, ncols=len(labels), figsize=(15, 8))
+
+    # Create box plots for DICE for each label
+    for idx, label in enumerate(labels):
+        data_label = filtered_df[filtered_df['LABEL'] == label]
+
+        sns.boxplot(x='DICE', data=data_label, ax=axes[0, idx], color='skyblue')
+        axes[0, idx].set_title(f'{label} - Dice Coefficient')
+
+    # Create box plots for HDRFDST for each label
+    for idx, label in enumerate(labels):
+        data_label = filtered_df[filtered_df['LABEL'] == label]
+
+        sns.boxplot(x='HDRFDST', data=data_label, ax=axes[1, idx], color='salmon')
+        axes[1, idx].set_title(f'{label} - Hausdorff Distance')
+
+    # Adjust layout and display
+    plt.tight_layout()
+    plt.show()
+
     #Trying to do some correlation stuff:
-    metrics = ['HDRFDST', 'DICE']
+    #metrics = ['HDRFDST', 'DICE']
     # Create a correlation matrix using the selected metrics
-    correlation_matrix = df[metrics].corr()
+    #correlation_matrix = df[metrics].corr()
 
     # Plot the correlation matrix as a heatmap
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title('Correlation Heatmap of Metrics')
-    plt.show()
+    #plt.figure(figsize=(8, 6))
+    #sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+    #plt.title('Correlation Heatmap of Metrics')
+    #plt.show()
 
     ##JUST SOME TEST STUFF TO DEBUG
     #print(filtered_df.head())
