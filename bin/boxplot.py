@@ -3,51 +3,55 @@ import numpy as np
 import pandas as pd
 import csv
 import seaborn as sns
+import os
 
 
 def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
-        file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
-        #df = pd.read_csv(r"results.csv", delimiter=';')
-        df = pd.read_csv(file_path, delimiter=';')
+        #file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        ##df = pd.read_csv(r"results.csv", delimiter=';')
+        #df = pd.read_csv(file_path, delimiter=';')
+        folder_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/results"
+        all_files = os.listdir(folder_path)
 
-    except: #added an exit if directory wrong
-        print("File 'results.csv' not found. Please verify the file path.")
+    except FileNotFoundError as e: #added an exit if directory wrong
+        print(f"File 'results.csv' not found: {e}")
+        print("Please verify the file path.")
         return
 
-    # Check DataFrame columns to understand the column names
-    #print(df.columns)
+    csv_files = [file for file in all_files if file.endswith('.csv')]
+    if not csv_files:
+        print("No CSV files found in the specified folder.")
+        return
 
-    # Ensure if 'LABEL' column exists in the DataFrame
-    #if 'LABEL' in df.columns:
-    #    print("Column 'LABEL' exists.")
-    #else:
-    #    print("Column 'LABEL' does not exist.")
+    print("CSV files found in the folder:")
+    for csv_file in csv_files:
+        print(os.path.join(folder_path, csv_file))
+        csv_file_path = os.path.join(folder_path, csv_file)
 
-    # read the data into a list
-    # Extract the Dice coefficients for each label
-    labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus'] #changes the label names
-    filtered_df = df[df['LABEL'].isin(labels)]
+        df = pd.read_csv(csv_file_path, delimiter=';')
 
-    # plot the Dice coefficients per label (i.e. white matter, gray matter, hippocampus, amygdala, thalamus)
-    # Create a boxplot for each label
-    plt.figure(figsize=(10, 6))
-    plt.boxplot([filtered_df[filtered_df['LABEL'] == label]['DICE'] for label in labels], labels=labels)
-    plt.title('Dice Coefficients per Label')
-    plt.ylabel('Dice Coefficient')
-    plt.xlabel('Label')
-    plt.grid(axis='y')
-    plt.show()
+
+        labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
+        filtered_df = df[df['LABEL'].isin(labels)]
+
+        # Plot the Dice coefficients per label
+        plt.figure(figsize=(10,6))
+        plt.boxplot([filtered_df[filtered_df['LABEL'] == label]['DICE'] for label in labels], labels=labels)
+        plt.title('Dice Coefficients per Label')
+        plt.ylabel('Dice Coefficient')
+        plt.xlabel('Label')
+        plt.grid(axis='y')
+        plt.show()
     #  in a boxplot
-    #Some dummy stuff
 
-    #Comparison between HDRFDST and the DICE
+    # Comparison between HDRFDST and the DICE
     plt.figure(figsize=(10, 6))
     plt.subplot(1, 2, 1)
     sns.boxplot(y=df['HDRFDST'])
-    plt.title('Hausdorf distance Boxplot')
+    plt.title('Hausdorff distance Boxplot')
 
     plt.subplot(1, 2, 2)
     sns.boxplot(y=df['DICE'])
@@ -56,10 +60,7 @@ def main():
     plt.tight_layout()
     plt.show()
 
-
-    #PLOTTING BOTH
-
-    # Read the data into a list
+    # Plotting both
     labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
     filtered_df = df[df['LABEL'].isin(labels)]
 
@@ -69,14 +70,12 @@ def main():
     # Create box plots for DICE for each label
     for idx, label in enumerate(labels):
         data_label = filtered_df[filtered_df['LABEL'] == label]
-
         sns.boxplot(x='DICE', data=data_label, ax=axes[0, idx], color='skyblue')
         axes[0, idx].set_title(f'{label} - Dice Coefficient')
 
     # Create box plots for HDRFDST for each label
     for idx, label in enumerate(labels):
         data_label = filtered_df[filtered_df['LABEL'] == label]
-
         sns.boxplot(x='HDRFDST', data=data_label, ax=axes[1, idx], color='salmon')
         axes[1, idx].set_title(f'{label} - Hausdorff Distance')
 
