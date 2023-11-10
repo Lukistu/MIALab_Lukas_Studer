@@ -84,22 +84,7 @@ def main():
     plt.tight_layout()
     plt.show()
 
-    #Trying to do some correlation stuff:
-    #metrics = ['HDRFDST', 'DICE']
-    # Create a correlation matrix using the selected metrics
-    #correlation_matrix = df[metrics].corr()
-
-    # Plot the correlation matrix as a heatmap
-    #plt.figure(figsize=(8, 6))
-    #sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
-    #plt.title('Correlation Heatmap of Metrics')
-    #plt.show()
-
-    ##JUST SOME TEST STUFF TO DEBUG
-    #print(filtered_df.head())
-    #print(df.head())# Print the first few rows of the filtered DataFrame
-    #print(filtered_df['DICE'].unique())
-    #print(df['DICE'].unique())# Check unique values in the 'DICE' column
+    
 
     # alternative: instead of manually loading/reading the csv file you could also use the pandas package
     # but you will need to install it first ('pip install pandas') and import it to this file ('import pandas as pd')
