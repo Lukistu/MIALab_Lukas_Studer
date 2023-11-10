@@ -70,13 +70,13 @@ def main():
     # Create box plots for DICE for each label
     for idx, label in enumerate(labels):
         data_label = filtered_df[filtered_df['LABEL'] == label]
-        sns.boxplot(x='DICE', data=data_label, ax=axes[0, idx], color='skyblue')
+        sns.boxplot(x='DICE', data=data_label, ax=axes[0, idx])
         axes[0, idx].set_title(f'{label} - Dice Coefficient')
 
     # Create box plots for HDRFDST for each label
     for idx, label in enumerate(labels):
         data_label = filtered_df[filtered_df['LABEL'] == label]
-        sns.boxplot(x='HDRFDST', data=data_label, ax=axes[1, idx], color='salmon')
+        sns.boxplot(x='HDRFDST', data=data_label, ax=axes[1, idx])
         axes[1, idx].set_title(f'{label} - Hausdorff Distance')
 
     # Adjust layout and display
