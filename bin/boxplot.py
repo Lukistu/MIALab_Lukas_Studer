@@ -37,51 +37,42 @@ def main():
         labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
         filtered_df = df[df['LABEL'].isin(labels)]
 
-        # Plot the Dice coefficients per label
-        plt.figure(figsize=(10,6))
-        plt.boxplot([filtered_df[filtered_df['LABEL'] == label]['DICE'] for label in labels], labels=labels)
-        plt.title('Dice Coefficients per Label')
+    #  in a boxplot
+        # Create box plot for Dice coefficients
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x='LABEL', y='DICE', data=filtered_df, color='white', linewidth=1.5)
+        plt.title('Dice Coefficients Comparison')
         plt.ylabel('Dice Coefficient')
         plt.xlabel('Label')
-        plt.grid(axis='y')
         plt.show()
-    #  in a boxplot
 
-    # Comparison between HDRFDST and the DICE
-    plt.figure(figsize=(10, 6))
-    plt.subplot(1, 2, 1)
-    sns.boxplot(y=df['HDRFDST'])
-    plt.title('Hausdorff distance Boxplot')
+        # Create box plot for Hausdorff distances
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x='LABEL', y='HDRFDST', data=filtered_df, color='white', linewidth=1.5)
+        plt.title('Hausdorff Distances Comparison')
+        plt.ylabel('Hausdorff Distance')
+        plt.xlabel('Label')
+        plt.show()
 
-    plt.subplot(1, 2, 2)
-    sns.boxplot(y=df['DICE'])
-    plt.title('Dice Coefficient Boxplot')
+        # Set up the figure and subplots
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 12))
 
-    plt.tight_layout()
-    plt.show()
+        # Create box plots for Dice coefficients
+        sns.boxplot(x='LABEL', y='DICE', data=filtered_df, ax=axes[0], color='white', linewidth=1.5)
+        axes[0].set_title('Dice Coefficients Comparison')
+        axes[0].set_ylabel('Dice Coefficient')
+        axes[0].set_xlabel('Label')
 
-    # Plotting both
-    labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
-    filtered_df = df[df['LABEL'].isin(labels)]
+        # Create box plots for Hausdorff distances
+        sns.boxplot(x='LABEL', y='HDRFDST', data=filtered_df, ax=axes[1], color='white', linewidth=1.5)
+        axes[1].set_title('Hausdorff Distances Comparison')
+        axes[1].set_ylabel('Hausdorff Distance')
+        axes[1].set_xlabel('Label')
 
-    # Set up the figure and subplots
-    fig, axes = plt.subplots(nrows=2, ncols=len(labels), figsize=(15, 8))
+        # Adjust layout and display
+        plt.tight_layout()
+        plt.show()
 
-    # Create box plots for DICE for each label
-    for idx, label in enumerate(labels):
-        data_label = filtered_df[filtered_df['LABEL'] == label]
-        sns.boxplot(y='DICE', data=data_label, ax=axes[0, idx], color='white')
-        axes[0, idx].set_title(f'{label} - Dice Coefficient')
-
-    # Create box plots for HDRFDST for each label
-    for idx, label in enumerate(labels):
-        data_label = filtered_df[filtered_df['LABEL'] == label]
-        sns.boxplot(y='HDRFDST', data=data_label, ax=axes[1, idx], color='white')
-        axes[1, idx].set_title(f'{label} - Hausdorff Distance')
-
-    # Adjust layout and display
-    plt.tight_layout()
-    plt.show()
 
     
 
