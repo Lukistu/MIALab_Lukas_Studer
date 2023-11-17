@@ -55,7 +55,7 @@ def main():
         plt.show()
 
         # Set up the figure and subplots
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 12))
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
 
         # Create box plots for Dice coefficients
         sns.boxplot(x='LABEL', y='DICE', data=filtered_df, ax=axes[0], color='white', linewidth=1.5)
