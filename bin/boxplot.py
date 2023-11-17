@@ -4,14 +4,20 @@ import pandas as pd
 import csv
 import seaborn as sns
 
-
+#test
 def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
+<<<<<<< HEAD
         #file_path = r"C:\Users\newto\OneDrive\BioMedicalEngineering\Notes and Class Documents\FS2024\05_Medical Image Analysis Lab\final_project\MIALab_Lukas_Studer\bin\mia-result\2023-11-03-12-27-54"
         df = pd.read_csv(r"C:\Users\newto\OneDrive\BioMedicalEngineering\Notes and Class Documents\FS2024\05_Medical Image Analysis Lab\final_project\MIALab_Lukas_Studer\bin\mia-result\2023-11-03-12-27-54", delimiter=';')
         #df = pd.read_csv(file_path, delimiter=';')
+=======
+        file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        #df = pd.read_csv(r"results.csv", delimiter=';')
+        df = pd.read_csv(file_path, delimiter=';')
+>>>>>>> be486faeee539f588793f1554ca29e0542a2a9ec
 
     except: #added an exit if directory wrong
         print("File 'results.csv' not found. Please verify the file path.")
