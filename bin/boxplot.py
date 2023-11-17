@@ -3,12 +3,14 @@ import numpy as np
 import pandas as pd
 import csv
 import seaborn as sns
+import os
 
 #test
 def main():
     #
     # load the "results.csv" file from the mia-results directory
     try:
+<<<<<<< HEAD
 <<<<<<< HEAD
         #file_path = r"C:\Users\newto\OneDrive\BioMedicalEngineering\Notes and Class Documents\FS2024\05_Medical Image Analysis Lab\final_project\MIALab_Lukas_Studer\bin\mia-result\2023-11-03-12-27-54"
         df = pd.read_csv(r"C:\Users\newto\OneDrive\BioMedicalEngineering\Notes and Class Documents\FS2024\05_Medical Image Analysis Lab\final_project\MIALab_Lukas_Studer\bin\mia-result\2023-11-03-12-27-54", delimiter=';')
@@ -18,67 +20,73 @@ def main():
         #df = pd.read_csv(r"results.csv", delimiter=';')
         df = pd.read_csv(file_path, delimiter=';')
 >>>>>>> be486faeee539f588793f1554ca29e0542a2a9ec
+=======
+        #file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
+        ##df = pd.read_csv(r"results.csv", delimiter=';')
+        #df = pd.read_csv(file_path, delimiter=';')
+        folder_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/results"
+        all_files = os.listdir(folder_path)
+>>>>>>> develop
 
-    except: #added an exit if directory wrong
-        print("File 'results.csv' not found. Please verify the file path.")
+    except FileNotFoundError as e: #added an exit if directory wrong
+        print(f"File 'results.csv' not found: {e}")
+        print("Please verify the file path.")
         return
 
-    # Check DataFrame columns to understand the column names
-    #print(df.columns)
+    csv_files = [file for file in all_files if file.endswith('.csv')]
+    if not csv_files:
+        print("No CSV files found in the specified folder.")
+        return
 
-    # Ensure if 'LABEL' column exists in the DataFrame
-    #if 'LABEL' in df.columns:
-    #    print("Column 'LABEL' exists.")
-    #else:
-    #    print("Column 'LABEL' does not exist.")
+    print("CSV files found in the folder:")
+    for csv_file in csv_files:
+        print(os.path.join(folder_path, csv_file))
+        csv_file_path = os.path.join(folder_path, csv_file)
 
-    # read the data into a list
-    # Extract the Dice coefficients for each label
-    labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus'] #changes the label names
-    filtered_df = df[df['LABEL'].isin(labels)]
+        df = pd.read_csv(csv_file_path, delimiter=';')
 
-    # plot the Dice coefficients per label (i.e. white matter, gray matter, hippocampus, amygdala, thalamus)
-    # Create a boxplot for each label
-    plt.figure(figsize=(10, 6))
-    plt.boxplot([filtered_df[filtered_df['LABEL'] == label]['DICE'] for label in labels], labels=labels)
-    plt.title('Dice Coefficients per Label')
-    plt.ylabel('Dice Coefficient')
-    plt.xlabel('Label')
-    plt.grid(axis='y')
-    plt.show()
+
+        labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
+        filtered_df = df[df['LABEL'].isin(labels)]
+
     #  in a boxplot
-    #Some dummy stuff
+        # Create box plot for Dice coefficients
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x='LABEL', y='DICE', data=filtered_df, color='white', linewidth=1.5)
+        plt.title('Dice Coefficients Comparison')
+        plt.ylabel('Dice Coefficient')
+        plt.xlabel('Label')
+        plt.show()
 
-    #Comparison between HDRFDST and the DICE
-    plt.figure(figsize=(10, 6))
-    plt.subplot(1, 2, 1)
-    sns.boxplot(y=df['HDRFDST'])
-    plt.title('Hausdorf distance Boxplot')
+        # Create box plot for Hausdorff distances
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x='LABEL', y='HDRFDST', data=filtered_df, color='white', linewidth=1.5)
+        plt.title('Hausdorff Distances Comparison')
+        plt.ylabel('Hausdorff Distance')
+        plt.xlabel('Label')
+        plt.show()
 
-    plt.subplot(1, 2, 2)
-    sns.boxplot(y=df['DICE'])
-    plt.title('Dice Coefficient Boxplot')
+        # Set up the figure and subplots
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
 
-    plt.tight_layout()
-    plt.show()
+        # Create box plots for Dice coefficients
+        sns.boxplot(x='LABEL', y='DICE', data=filtered_df, ax=axes[0], color='white', linewidth=1.5)
+        axes[0].set_title('Dice Coefficients Comparison')
+        axes[0].set_ylabel('Dice Coefficient')
+        axes[0].set_xlabel('Label')
+
+        # Create box plots for Hausdorff distances
+        sns.boxplot(x='LABEL', y='HDRFDST', data=filtered_df, ax=axes[1], color='white', linewidth=1.5)
+        axes[1].set_title('Hausdorff Distances Comparison')
+        axes[1].set_ylabel('Hausdorff Distance')
+        axes[1].set_xlabel('Label')
+
+        # Adjust layout and display
+        plt.tight_layout()
+        plt.show()
 
 
-    #Trying to do some correlation stuff:
-    metrics = ['HDRFDST', 'DICE']
-    # Create a correlation matrix using the selected metrics
-    correlation_matrix = df[metrics].corr()
-
-    # Plot the correlation matrix as a heatmap
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title('Correlation Heatmap of Metrics')
-    plt.show()
-
-    ##JUST SOME TEST STUFF TO DEBUG
-    #print(filtered_df.head())
-    #print(df.head())# Print the first few rows of the filtered DataFrame
-    #print(filtered_df['DICE'].unique())
-    #print(df['DICE'].unique())# Check unique values in the 'DICE' column
+    
 
     # alternative: instead of manually loading/reading the csv file you could also use the pandas package
     # but you will need to install it first ('pip install pandas') and import it to this file ('import pandas as pd')
