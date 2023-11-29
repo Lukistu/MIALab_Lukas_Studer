@@ -6,7 +6,6 @@ import warnings
 
 import pymia.filtering.filter as pymia_fltr
 import SimpleITK as sitk
-import numpy as np
 
 
 class ImageNormalization(pymia_fltr.Filter):
@@ -26,30 +25,13 @@ class ImageNormalization(pymia_fltr.Filter):
         Returns:
             sitk.Image: The normalized image.
         """
-
-        # Convert SimpleITK image to NumPy array
         img_arr = sitk.GetArrayFromImage(image)
-        # Cast the array to a float for numerical operations
-        img_arr = img_arr.astype(np.float32)
-        # Compute mean and standard deviation
-        mean_val = np.mean(img_arr)
-        std_dev_val = np.std(img_arr)
-        # Z-score normalization
-        normalized_data = (img_arr - mean_val) / std_dev_val
-        # Convert the normalized array back to a SimpleITK image
-        img_out = sitk.GetImageFromArray(normalized_data)
+
+        # Normalize the image using numpy
+        img_arr = (img_arr - np.min(img_arr)) / (np.max(img_arr) - np.min(img_arr))  # Normalizing intensities
+
+        img_out = sitk.GetImageFromArray(img_arr)
         img_out.CopyInformation(image)
-
-        """img_arr = sitk.GetArrayFromImage(image)
-
-        # Perform image normalization using NumPy
-        min_val = np.min(img_arr)
-        max_val = np.max(img_arr)
-        normalized_img_arr = (img_arr - min_val) / (max_val - min_val)
-
-        # Create a new SimpleITK image from the normalized NumPy array
-        img_out = sitk.GetImageFromArray(normalized_img_arr)
-        img_out.CopyInformation(image)"""
 
         return img_out
 
@@ -90,19 +72,14 @@ class SkullStripping(pymia_fltr.Filter):
             params (SkullStrippingParameters): The parameters with the brain mask.
 
         Returns:
-            sitk.Image: The skull-stripped image.
+            sitk.Image: The normalized image.
         """
-        if params is None or params.img_mask is None:
-            raise ValueError("SkullStrippingParameters with img_mask is required for skull stripping.")
+        mask = params.img_mask
 
-        mask = params.img_mask  # The brain mask
-        # Convert the mask image to the same pixel type as the primary image
-        mask = sitk.Cast(mask, image.GetPixelID())
+        # Remove the skull from the image by using the brain mask
+        image = sitk.Mask(image, mask)
 
-        # Apply the brain mask to remove non-brain regions
-        stripped_image = image * mask
-
-        return stripped_image
+        return image
 
     def __str__(self):
         """Gets a printable string representation.
@@ -137,7 +114,7 @@ class ImageRegistration(pymia_fltr.Filter):
         """Initializes a new instance of the ImageRegistration class."""
         super().__init__()
 
-    def execute(self, image: sitk.Image, params: ImageRegistrationParameters = False) -> sitk.Image:
+    def execute(self, image: sitk.Image, params: ImageRegistrationParameters = None) -> sitk.Image:
         """Registers an image.
 
         Args:
@@ -147,37 +124,18 @@ class ImageRegistration(pymia_fltr.Filter):
         Returns:
             sitk.Image: The registered image.
         """
-        # toodo: replace this filter by a registration. Registration can be costly, therefore, we provide you the
-        # transformation, which you only need to apply to the image!
-        # warnings.warn('No registration implemented. Returning unregistered image') WARNING OUTDATED
 
-        atlas = params.atlas
         transform = params.transformation
-        is_ground_truth = params.is_ground_truth  # the ground truth will be handled slightly different
 
-        # This is the registration image to atlas
-        if is_ground_truth:
-            # Use nearest neighbor interpolation for ground truth images (label maps)
-            registered_image = sitk.Resample(image, atlas, transform, sitk.sitkNearestNeighbor, 0.0)
-        else:
-            # Use different interpolators for MRI images results might improve!
-            registered_image = sitk.Resample(image, atlas, transform, sitk.sitkLinear, 0.0)
-            # You can adjust the interpolator based on the specific MRI image characteristics and requirements
+        # Applying the provided transformation to the image using SimpleITK's Resample function
+        resampler = sitk.ResampleImageFilter()
+        resampler.SetReferenceImage(params.atlas)
+        resampler.SetInterpolator(sitk.sitkLinear)  # Adjust the interpolator as needed
+        resampler.SetTransform(transform)
 
-        """# This is the registration atlas to image
-        inverse_transform = transform.GetInverse()
-        if is_ground_truth:
-            registered_image = sitk.Resample(atlas, image, inverse_transform, sitk.sitkNearestNeighbor, 0.0)
-        else:
-            # Use Euler3DTransform for 3D images
-            # euler_transform = sitk.Euler3DTransform()
-            registered_image = sitk.Resample(atlas, image, inverse_transform, sitk.sitkBSpline, 0.0)"""
+        image = resampler.Execute(image)
 
-        # note: if you are interested in registration, and want to test it, have a look at
-        # pymia.filtering.registration.MultiModalRegistration. Think about the type of registration, i.e.
-        # do you want to register to an atlas or inter-subject? Or just ask us, we can guide you ;-)"""
-
-        return registered_image
+        return image
 
     def __str__(self):
         """Gets a printable string representation.

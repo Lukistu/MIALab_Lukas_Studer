@@ -1,6 +1,6 @@
 """A medical image analysis pipeline.
 
-The pipeline is used for brain tissue segmentation using a decision forest classifier.
+The pipeline is used for brain tissue segmentation using registered atlas labels.
 """
 import argparse
 import datetime
@@ -10,10 +10,11 @@ import timeit
 import warnings
 
 import SimpleITK as sitk
-import sklearn.ensemble as sk_ensemble
 import numpy as np
 import pymia.data.conversion as conversion
 import pymia.evaluation.writer as writer
+import pymia.filtering.filter as fltr
+import mialab.filtering.preprocessing as fltr_prep
 
 try:
     import mialab.data.structure as structure
@@ -33,8 +34,11 @@ LOADING_KEYS = [structure.BrainImageTypes.T1w,
                 structure.BrainImageTypes.RegistrationTransform]  # the list of data we will load
 
 
+# DO WE HAVE TO LOAD ATLAS LABELS HERE?---------------------------------------------------------------------------------
+
+
 def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_dir: str):
-    """Brain tissue segmentation using decision forests.
+    """Brain tissue segmentation using registered atlas labels.
 
     The main routine executes the medical image analysis pipeline:
 
@@ -42,16 +46,11 @@ def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_di
         - Registration
         - Pre-processing
         - Feature extraction
-        - Decision forest classifier model building
-        - Segmentation using the decision forest classifier model on unseen images
-        - Post-processing of the segmentation
         - Evaluation of the segmentation
     """
 
-    # load atlas images
+    # LOAD ATLAS LABELS?------------------------------------------------------------------------------------------------
     putil.load_atlas_images(data_atlas_dir)
-
-    print('-' * 5, 'Training...')
 
     # crawl the training image directories
     crawler = futil.FileSystemDataCrawler(data_train_dir,
@@ -67,19 +66,6 @@ def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_di
 
     # load images for training and pre-process
     images = putil.pre_process_batch(crawler.data, pre_process_params, multi_process=False)
-
-    # generate feature matrix and label vector
-    data_train = np.concatenate([img.feature_matrix[0] for img in images])
-    labels_train = np.concatenate([img.feature_matrix[1] for img in images]).squeeze()
-
-    #warnings.warn('Random forest parameters not properly set.')
-    forest = sk_ensemble.RandomForestClassifier(max_features=images[0].feature_matrix[0].shape[1],
-                                                n_estimators=30, # Set the value of n_estimators to a typical value
-                                                max_depth=10) # Set the max_depth to 10, hopefully avoiding overfitting
-
-    start_time = timeit.default_timer()
-    forest.fit(data_train, labels_train)
-    print(' Time elapsed:', timeit.default_timer() - start_time, 's')
 
     # create a result directory with timestamp
     t = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -101,40 +87,39 @@ def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_di
     pre_process_params['training'] = False
     images_test = putil.pre_process_batch(crawler.data, pre_process_params, multi_process=False)
 
-    images_prediction = []
-    images_probabilities = []
 
     for img in images_test:
         print('-' * 10, 'Testing', img.id_)
 
-        start_time = timeit.default_timer()
-        predictions = forest.predict(img.feature_matrix[0])
-        probabilities = forest.predict_proba(img.feature_matrix[0])
-        print(' Time elapsed:', timeit.default_timer() - start_time, 's')
+        # ---------------------------------------------NEW-------------------------------------------------------------
+        id_: str
+        paths: dict
 
-        # convert prediction and probabilities back to SimpleITK images
-        image_prediction = conversion.NumpySimpleITKImageBridge.convert(predictions.astype(np.uint8),
-                                                                        img.image_properties)
-        image_probabilities = conversion.NumpySimpleITKImageBridge.convert(probabilities, img.image_properties)
+        # load atlas labels
+        path = paths.pop(id_, '')  # the value with key id_ is the root directory of the image
+        path_to_transform = paths.pop(structure.BrainImageTypes.RegistrationTransform, '')
+        img = {img_key: sitk.ReadImage(path) for img_key, path in paths.items()}
+        transform = sitk.ReadTransform(path_to_transform)
+        atlas_labels = structure.BrainImage(id_, path, img, transform)
+
+        # construct pipeline for atlas label pre-processing
+        pipeline_atlas_label = fltr.FilterPipeline()
+        atlas_registration_pre = True
+        if atlas_registration_pre:
+            pipeline_atlas_label.add_filter(fltr_prep.ImageRegistration())
+            pipeline_atlas_label.set_param(fltr_prep.ImageRegistrationParameters(atlas_labels, img.transformation),
+                                           len(pipeline_atlas_label.filters) - 1)
+
+        # execute pipeline on the atlas label
+        img.images[structure.BrainImageTypes.AtlasLabels] = pipeline_atlas_label.execute(
+            img.images[structure.BrainImageTypes.AtlasLabels])
+
+        transformed_atlas_labels = img
+
+        # ---------------------------------------------NEW-------------------------------------------------------------
 
         # evaluate segmentation without post-processing
-        evaluator.evaluate(image_prediction, img.images[structure.BrainImageTypes.GroundTruth], img.id_)
-
-        images_prediction.append(image_prediction)
-        images_probabilities.append(image_probabilities)
-
-    # post-process segmentation and evaluate with post-processing
-    post_process_params = {'simple_post': True}
-    images_post_processed = putil.post_process_batch(images_test, images_prediction, images_probabilities,
-                                                     post_process_params, multi_process=True)
-
-    for i, img in enumerate(images_test):
-        evaluator.evaluate(images_post_processed[i], img.images[structure.BrainImageTypes.GroundTruth],
-                           img.id_ + '-PP')
-
-        # save results
-        sitk.WriteImage(images_prediction[i], os.path.join(result_dir, images_test[i].id_ + '_SEG.mha'), True)
-        sitk.WriteImage(images_post_processed[i], os.path.join(result_dir, images_test[i].id_ + '_SEG-PP.mha'), True)
+        evaluator.evaluate(transformed_atlas_labels, img.images[structure.BrainImageTypes.GroundTruth], img.id_)
 
     # use two writers to report the results
     os.makedirs(result_dir, exist_ok=True)  # generate result directory, if it does not exists
