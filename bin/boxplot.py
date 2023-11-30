@@ -14,7 +14,8 @@ def main():
         ##df = pd.read_csv(r"results.csv", delimiter=';')
         #df = pd.read_csv(file_path, delimiter=';')
         #folder_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/results"
-        folder_path = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result\2023-11-20-13-16-18"
+        folder_path = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
+                      r"\bin\mia-result\2023-11-30-17-12-45"
         all_files = os.listdir(folder_path)
 
     except FileNotFoundError as e: #added an exit if directory wrong
@@ -45,6 +46,7 @@ def main():
         plt.title('Dice Coefficients Comparison')
         plt.ylabel('Dice Coefficient')
         plt.xlabel('Label')
+        plt.ylim(bottom=0, top=1)
         plt.show()
 
         # Create box plot for Hausdorff distances
@@ -53,6 +55,7 @@ def main():
         plt.title('Hausdorff Distances Comparison')
         plt.ylabel('Hausdorff Distance')
         plt.xlabel('Label')
+        plt.ylim(bottom=0)
         plt.show()
 
         # Set up the figure and subplots
@@ -63,12 +66,14 @@ def main():
         axes[0].set_title('Dice Coefficients Comparison')
         axes[0].set_ylabel('Dice Coefficient')
         axes[0].set_xlabel('Label')
+        axes[0].set_ylim(bottom=0, top=1)  # Set lower and upper limit of y-axis
 
         # Create box plots for Hausdorff distances
         sns.boxplot(x='LABEL', y='HDRFDST', data=filtered_df, ax=axes[1], color='white', linewidth=1.5)
         axes[1].set_title('Hausdorff Distances Comparison')
         axes[1].set_ylabel('Hausdorff Distance')
         axes[1].set_xlabel('Label')
+        axes[1].set_ylim(bottom=0)  # Set lower limit of y-axis
 
         # Adjust layout and display
         plt.tight_layout()
