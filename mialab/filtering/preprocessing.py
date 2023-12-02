@@ -104,7 +104,7 @@ class ImageRegistrationParameters(pymia_fltr.FilterParams):
     """Image registration parameters."""
 
     def __init__(self, atlas: sitk.Image, transformation: sitk.Transform, is_ground_truth: bool = False):
-        """Initializes a new instance of the ImageRegistrationParameters
+        """Initializes a new instance of the  Parameters
 
         Args:
             atlas (sitk.Image): The atlas image.
