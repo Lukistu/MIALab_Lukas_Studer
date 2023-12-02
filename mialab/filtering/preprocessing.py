@@ -6,7 +6,6 @@ import warnings
 
 import pymia.filtering.filter as pymia_fltr
 import SimpleITK as sitk
-import numpy as np
 
 
 class ImageNormalization(pymia_fltr.Filter):
@@ -21,7 +20,7 @@ class ImageNormalization(pymia_fltr.Filter):
 
         Args:
             image (sitk.Image): The image.
-            params (FilterParams): The parameters (unused).
+            params (IFilterParams): The parameters (unused).
 
         Returns:
             sitk.Image: The normalized image.
@@ -29,14 +28,14 @@ class ImageNormalization(pymia_fltr.Filter):
 
         img_arr = sitk.GetArrayFromImage(image)
 
-        # Perform image normalization using NumPy
-        min_val = np.min(img_arr)
-        max_val = np.max(img_arr)
+        # todo: normalize the image using numpy
+        # warnings.warn('No normalization implemented. Returning unprocessed image.')
 
-        normalized_img_arr = (img_arr - min_val) / (max_val - min_val)
+        mean = img_arr.mean()
+        std = img_arr.std()
+        img_arr = (img_arr - mean) / std
 
-        # Create a new SimpleITK image from the normalized NumPy array
-        img_out = sitk.GetImageFromArray(normalized_img_arr)
+        img_out = sitk.GetImageFromArray(img_arr)
         img_out.CopyInformation(image)
 
         return img_out
@@ -78,17 +77,17 @@ class SkullStripping(pymia_fltr.Filter):
             params (SkullStrippingParameters): The parameters with the brain mask.
 
         Returns:
-            sitk.Image: The skull-stripped image.
+            sitk.Image: The normalized image.
         """
-        if params is None or params.img_mask is None:
-            raise ValueError("SkullStrippingParameters with img_mask is required for skull stripping.")
+        mask = params.img_mask  # the brain mask
 
-        mask = params.img_mask  # The brain mask
+        # todo: remove the skull from the image by using the brain mask
+        # warnings.warn('No skull-stripping implemented. Returning unprocessed image.')
+        image[mask <= 0] = 0
+        # see https://discourse.itk.org/t/using-an-image-as-a-mask/3921/9 for more.
+        # image = sitk.Mask(sitk.Cast(image, sitk.sitkUInt16), mask, maskingValue=1, outsideValue=0)
 
-        # Apply the brain mask to remove non-brain regions
-        stripped_image = image * mask
-
-        return stripped_image
+        return image
 
     def __str__(self):
         """Gets a printable string representation.
@@ -134,44 +133,27 @@ class ImageRegistration(pymia_fltr.Filter):
             sitk.Image: The registered image.
         """
 
-        # toodo: replace this filter by a registration. Registration can be costly, therefore, we provide you the
+        # todo: replace this filter by a registration. Registration can be costly, therefore, we provide you the
         # transformation, which you only need to apply to the image!
-        # warnings.warn('No registration implemented. Returning unregistered image') WARNING OUTDATED
+        # warnings.warn('No registration implemented. Returning unregistered image')
 
         atlas = params.atlas
         transform = params.transformation
         is_ground_truth = params.is_ground_truth  # the ground truth will be handled slightly different
-
-        # Create a registration object
-        registration = sitk.ImageRegistrationMethod()
-
-        # Choose a similarity metric (e.g., mutual information)
-        registration.SetMetricAsMattesMutualInformation()
-
-        # Choose an optimizer (e.g., gradient descent)
-        registration.SetOptimizerAsGradientDescent(learningRate=0.1, numberOfIterations=100,
-                                                   estimateLearningRate=registration.EachIteration)
-
-        # Create the transformation (e.g., affine)
-        initial_transform = sitk.AffineTransform(3)
-
-        # Set the initial transformation parameters (if needed)
-        initial_transform.SetCenter([0, 0, 0])  # Adjust as needed
-
-        registration.SetInitialTransform(initial_transform, inPlace=False)
-
-        # Execute the registration
-        final_transform = registration.Execute(sitk.Cast(image, sitk.sitkFloat32), sitk.Cast(atlas, sitk.sitkFloat32))
-
-        # Apply the final transformation to the image
-        registered_image = sitk.Resample(image, atlas, final_transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
-
+        if is_ground_truth:
+            # apply transformation to ground truth and brain mask using nearest neighbor interpolation
+            image = sitk.Resample(image, atlas, transform, sitk.sitkNearestNeighbor, 0,
+                                  image.GetPixelIDValue())
+        else:
+            # apply transformation to T1w and T2w images using linear interpolation
+            image = sitk.Resample(image, atlas, transform, sitk.sitkLinear, 0.0,
+                                  image.GetPixelIDValue())
 
         # note: if you are interested in registration, and want to test it, have a look at
         # pymia.filtering.registration.MultiModalRegistration. Think about the type of registration, i.e.
         # do you want to register to an atlas or inter-subject? Or just ask us, we can guide you ;-)
 
-        return registered_image
+        return image
 
     def __str__(self):
         """Gets a printable string representation.
@@ -181,64 +163,3 @@ class ImageRegistration(pymia_fltr.Filter):
         """
         return 'ImageRegistration:\n' \
             .format(self=self)
-
-
-class ImageRegistrationWithInverse(pymia_fltr.Filter):
-    """Represents a registration filter with the ability to reverse the transformation."""
-
-    def __init__(self):
-        """Initializes a new instance of the ImageRegistrationWithInverse class."""
-        super().__init__()
-
-    def execute(self, image: sitk.Image, params: ImageRegistrationParameters = None) -> sitk.Image:
-        """Registers an image and performs a reversal from atlas space to patient space.
-
-        Args:
-            image (sitk.Image): The image.
-            params (ImageRegistrationParameters): The registration parameters.
-
-        Returns:
-            sitk.Image: The registered image.
-        """
-
-        atlas = params.atlas
-        transform = params.transformation
-        is_ground_truth = params.is_ground_truth  # the ground truth will be handled slightly different
-
-        # Create a registration object
-        registration = sitk.ImageRegistrationMethod()
-
-        # Choose a similarity metric (e.g., mutual information)
-        registration.SetMetricAsMattesMutualInformation()
-
-        # Choose an optimizer (e.g., gradient descent)
-        registration.SetOptimizerAsGradientDescent(learningRate=0.1, numberOfIterations=100,
-                                                   estimateLearningRate=registration.EachIteration)
-
-        # Create the transformation (e.g., affine)
-        initial_transform = sitk.AffineTransform(3)
-
-        # Set the initial transformation parameters (if needed)
-        initial_transform.SetCenter([0, 0, 0])  # Adjust as needed
-
-        registration.SetInitialTransform(initial_transform, inPlace=False)
-
-        # Execute the registration
-        final_transform = registration.Execute(sitk.Cast(image, sitk.sitkFloat32), sitk.Cast(atlas, sitk.sitkFloat32))
-
-        # Apply the final transformation to the image
-        registered_image = sitk.Resample(image, atlas, final_transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
-
-        # Reverse the transformation to get back to patient space
-        inverse_transform = final_transform.GetInverse()
-        reversed_image = sitk.Resample(registered_image, image, inverse_transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
-
-        return reversed_image
-
-    def __str__(self):
-        """Gets a printable string representation.
-
-        Returns:
-            str: String representation.
-        """
-        return 'ImageRegistrationWithInverse:\n'
