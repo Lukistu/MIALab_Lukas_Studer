@@ -13,11 +13,11 @@ def main():
         #file_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/2023-11-03-12-27-54/results.csv"
         ##df = pd.read_csv(r"results.csv", delimiter=';')
         #df = pd.read_csv(file_path, delimiter=';')
-        folder_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/results"
+        folder_path = "C:/Users/SuregonsLab/Desktop/Newton-CNN/MIALab_Lukas_Studer/probabilities/mia-result/2023-12-02-18-38-22"
         all_files = os.listdir(folder_path)
 
     except FileNotFoundError as e: #added an exit if directory wrong
-        print(f"File 'results.csv' not found: {e}")
+        print(f"File 'atlas_results_summary.csv' not found: {e}")
         print("Please verify the file path.")
         return
 
