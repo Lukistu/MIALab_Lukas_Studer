@@ -37,15 +37,35 @@ LOADING_KEYS = [structure.BrainImageTypes.T1w,
 # DO WE HAVE TO LOAD ATLAS LABELS HERE?---------------------------------------------------------------------------------
 
 
-def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
+def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_dir: str):
     """Brain tissue segmentation using registered atlas labels.
+
+    The main routine executes the medical image analysis pipeline:
+
+        - Image loading
+        - Registration
+        - Pre-processing
+        - Feature extraction
+        - Evaluation of the segmentation
     """
 
-    # --LOAD ATLAS LABELS?--
-    atlas_labels = {}
-    for file in os.listdir(data_atlas_labels_dir):
-        if file.endswith(".nii.gz"):
-            atlas_labels[file.split("_")[-1][0]] = sitk.ReadImage(os.path.join(data_atlas_labels_dir, file))
+    # LOAD ATLAS LABELS?------------------------------------------------------------------------------------------------
+    putil.load_atlas_images(data_atlas_dir)
+
+    # crawl the training image directories
+    crawler = futil.FileSystemDataCrawler(data_train_dir,
+                                          LOADING_KEYS,
+                                          futil.BrainImageFilePathGenerator(),
+                                          futil.DataDirectoryFilter())
+    pre_process_params = {'skullstrip_pre': True,
+                          'normalization_pre': True,
+                          'registration_pre': True,
+                          'coordinates_feature': True,
+                          'intensity_feature': True,
+                          'gradient_intensity_feature': True}
+
+    # load images for training and pre-process
+    images = putil.pre_process_batch(crawler.data, pre_process_params, multi_process=False)
 
     # create a result directory with timestamp
     t = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -64,43 +84,53 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
                                           futil.DataDirectoryFilter())
 
     # load images for testing and pre-process
-    pre_process_params = {'skullstrip_pre': True, 'normalization_pre': True, 'registration_pre': False,
-                          'coordinates_feature': True, 'intensity_feature': False, 'gradient_intensity_feature': False,
-                          'training': False}
+    pre_process_params['training'] = False
     images_test = putil.pre_process_batch(crawler.data, pre_process_params, multi_process=False)
+
 
     for img in images_test:
         print('-' * 10, 'Testing', img.id_)
 
-        # --TRANSFORM ATLAS LABELS TO NATIVE SPACE--
-        # Learn about transformations here: https://simpleitk.org/SPIE2019_COURSE/02_images_and_resampling.html
-        transformed_labels = {}
-        transform_matrix = img.transformation.GetInverse()
-        for key in atlas_labels.keys():
-            transformed_labels[key] = sitk.Resample(atlas_labels[key], img.images[structure.BrainImageTypes.T1w], transform_matrix, sitk.sitkNearestNeighbor)
+        # ---------------------------------------------NEW-------------------------------------------------------------
+        id_: str
+        paths = {} # ????
 
-        # -- COMBINE TRANSFORMED ATLAS LABELS --
-        # Learn about handling sitk image data here: https://simpleitk.org/SimpleITK-Notebooks/01_Image_Basics.html
-        label_image = sitk.Image(img.images[structure.BrainImageTypes.GroundTruth].GetSize(), sitk.sitkInt8)
-        label_array = sitk.GetArrayFromImage(label_image)
-        for key in atlas_labels.keys():
-            atlas_label_image = sitk.GetArrayFromImage(transformed_labels[key])
-            label_array[atlas_label_image >= 0.5] = key # try changing 0.5 to something else to check how well this works! 
+        # load atlas labels
+        path = paths.pop(id_, '')  # the value with key id_ is the root directory of the image
+        path_to_transform = paths.pop(structure.BrainImageTypes.RegistrationTransform, '')
+        img = {img_key: sitk.ReadImage(path) for img_key, path in paths.items()}
+        transform = sitk.ReadTransform(path_to_transform)
+        atlas_labels = structure.BrainImage(id_, path, img, transform)
 
-        label_image = sitk.GetImageFromArray(label_array)
+        # construct pipeline for atlas label pre-processing
+        pipeline_atlas_label = fltr.FilterPipeline()
+        atlas_registration_pre = True
+        if atlas_registration_pre:
+            pipeline_atlas_label.add_filter(fltr_prep.ImageRegistration())
+            pipeline_atlas_label.set_param(fltr_prep.ImageRegistrationParameters(atlas_labels, img.transformation),
+                                           len(pipeline_atlas_label.filters) - 1)
 
-        # --EVALUATE TRANSFORMED ATLAS LABELS--
-        evaluator.evaluate(label_image, img.images[structure.BrainImageTypes.GroundTruth], img.id_)
+        # execute pipeline on the atlas label
+        img.images[structure.BrainImageTypes.AtlasLabels] = pipeline_atlas_label.execute(
+            img.images[structure.BrainImageTypes.AtlasLabels])
+
+        transformed_atlas_labels = img
+
+        # ---------------------------------------------NEW-------------------------------------------------------------
+
+        # evaluate segmentation without post-processing
+        evaluator.evaluate(transformed_atlas_labels, img.images[structure.BrainImageTypes.GroundTruth], img.id_)
 
     # use two writers to report the results
-    result_file = os.path.join(result_dir, 'atlas_results.csv')
+    os.makedirs(result_dir, exist_ok=True)  # generate result directory, if it does not exists
+    result_file = os.path.join(result_dir, 'results.csv')
     writer.CSVWriter(result_file).write(evaluator.results)
 
     print('\nSubject-wise results...')
     writer.ConsoleWriter().write(evaluator.results)
 
     # report also mean and standard deviation among all subjects
-    result_summary_file = os.path.join(result_dir, 'atlas_results_summary.csv')
+    result_summary_file = os.path.join(result_dir, 'results_summary.csv')
     functions = {'MEAN': np.mean, 'STD': np.std}
     writer.CSVStatisticsWriter(result_summary_file, functions=functions).write(evaluator.results)
     print('\nAggregated statistic results...')
@@ -127,8 +157,15 @@ if __name__ == "__main__":
     parser.add_argument(
         '--data_atlas_dir',
         type=str,
-        default=os.path.normpath(os.path.join(script_dir, '../data/atlas_labels_from_training')),
+        default=os.path.normpath(os.path.join(script_dir, '../data/atlas')),
         help='Directory with atlas data.'
+    )
+
+    parser.add_argument(
+        '--data_train_dir',
+        type=str,
+        default=os.path.normpath(os.path.join(script_dir, '../data/train/')),
+        help='Directory with training data.'
     )
 
     parser.add_argument(
@@ -139,4 +176,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args.result_dir, args.data_atlas_dir, args.data_test_dir)
+    main(args.result_dir, args.data_atlas_dir, args.data_train_dir, args.data_test_dir)

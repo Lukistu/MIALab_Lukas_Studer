@@ -67,12 +67,14 @@ class FeatureExtractor:
         Returns:
             structure.BrainImage: The image with extracted features.
         """
-        # warnings.warn('No features from T2-weighted image extracted.')
 
         if self.coordinates_feature:
             atlas_coordinates = fltr_feat.AtlasCoordinates()
             self.img.feature_images[FeatureImageTypes.ATLAS_COORD] = \
                 atlas_coordinates.execute(self.img.images[structure.BrainImageTypes.T1w])
+            self.img.feature_images[FeatureImageTypes.ATLAS_COORD] = \
+                atlas_coordinates.execute(self.img.images[structure.BrainImageTypes.T2w])
+
 
         if self.intensity_feature:
             self.img.feature_images[FeatureImageTypes.T1w_INTENSITY] = self.img.images[structure.BrainImageTypes.T1w]
@@ -283,29 +285,33 @@ def post_process(img: structure.BrainImage, segmentation: sitk.Image, probabilit
     return pipeline.execute(segmentation)
 
 
-def init_evaluator(directory: str, result_file_name: str = 'results.csv') -> eval_.Evaluator:
+def init_evaluator() -> eval_.Evaluator:
     """Initializes an evaluator.
-
-    Args:
-        directory (str): The directory for the results file.
-        result_file_name (str): The result file name (CSV file).
 
     Returns:
         eval.Evaluator: An evaluator.
     """
-    os.makedirs(directory, exist_ok=True)  # generate result directory, if it does not exists
 
-    metrics = [metric.DiceCoefficient(), metric.HausdorffDistance()]
-    labels = {1:"WhiteMatter", 2:"GreyMatter", 3:"Hippocampus", 4:"Amygdala", 5:"Thalamus"}
+    # Initialize metrics
+    metrics = [
+        metric.DiceCoefficient(),
+        metric.HausdorffDistance(percentile=95),  # Add Hausdorff distance metric
+    ]
+
+    # define the labels to evaluate
+    labels = {1: 'WhiteMatter',
+              2: 'GreyMatter',
+              3: 'Hippocampus',
+              4: 'Amygdala',
+              5: 'Thalamus'
+              }
+
     evaluator = eval_.SegmentationEvaluator(metrics, labels)
-
-    # warnings.warn('Initialized evaluation with the Dice coefficient. Do you know other suitable metrics?')
-    # you should add more metrics than just the Hausdorff distance!
     return evaluator
 
 
 def pre_process_batch(data_batch: t.Dict[structure.BrainImageTypes, structure.BrainImage],
-                      pre_process_params: dict=None, multi_process=True) -> t.List[structure.BrainImage]:
+                      pre_process_params: dict = None, multi_process: bool = True) -> t.List[structure.BrainImage]:
     """Loads and pre-processes a batch of images.
 
     The pre-processing includes:
