@@ -55,7 +55,7 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
     print('-' * 5, 'Testing...')
 
     # initialize evaluator
-    evaluator = putil.init_evaluator()
+    evaluator = putil.init_evaluator(result_dir)
 
     # crawl the training image directories
     crawler = futil.FileSystemDataCrawler(data_test_dir,
