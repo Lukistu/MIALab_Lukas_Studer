@@ -56,7 +56,7 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
     print('-' * 5, 'Testing...')
 
     # initialize evaluator
-    evaluator = putil.init_evaluator()
+    evaluator = putil.init_evaluator(result_dir)
 
     # crawl the training image directories
     crawler = futil.FileSystemDataCrawler(data_test_dir,
@@ -87,7 +87,7 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
         label_array = sitk.GetArrayFromImage(label_image)
         for key in atlas_labels.keys():
             atlas_label_image = sitk.GetArrayFromImage(transformed_labels[key])
-            label_array[atlas_label_image >= 0.5] = key # try changing 0.5 to something else to check how well this works! 
+            label_array[atlas_label_image >= 0.8] = key # try changing 0.5 to something else to check how well this works!
 
         label_image = sitk.GetImageFromArray(label_array)
 
