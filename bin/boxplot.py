@@ -15,7 +15,7 @@ def main():
         #df = pd.read_csv(file_path, delimiter=';')
         #folder_path = "/Users/sophie/Desktop/Medical Image Analysis Lab/copy/MIALab_Lukas_Studer/bin/mia-result/results"
         folder_path = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
-                      r"\bin\mia-result\2023-11-30-17-12-45"
+                      r"\bin\mia-result\2023-12-06-15-10-26_forest-200-7"
         all_files = os.listdir(folder_path)
 
     except FileNotFoundError as e: #added an exit if directory wrong
@@ -39,7 +39,7 @@ def main():
         labels = ['WhiteMatter', 'GreyMatter', 'Hippocampus', 'Amygdala', 'Thalamus']
         filtered_df = df[df['LABEL'].isin(labels)]
 
-    #  in a boxplot
+        """#  in a boxplot
         # Create box plot for Dice coefficients
         plt.figure(figsize=(10, 6))
         sns.boxplot(x='LABEL', y='DICE', data=filtered_df, color='white', linewidth=1.5)
@@ -56,7 +56,7 @@ def main():
         plt.ylabel('Hausdorff Distance')
         plt.xlabel('Label')
         plt.ylim(bottom=0)
-        plt.show()
+        plt.show()"""
 
         # Set up the figure and subplots
         fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
