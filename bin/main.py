@@ -74,7 +74,7 @@ def main(result_dir: str, data_atlas_dir: str, data_train_dir: str, data_test_di
 
     forest = sk_ensemble.RandomForestClassifier(max_features=images[0].feature_matrix[0].shape[1],
                                                 n_estimators=300,
-                                                max_depth=30)
+                                                max_depth=40)
 
     start_time = timeit.default_timer()
     forest.fit(data_train, labels_train)

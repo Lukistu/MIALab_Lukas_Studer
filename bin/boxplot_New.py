@@ -5,9 +5,9 @@ import os
 
 def main():
     folder_path_ML = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
-                     r"\bin\mia-result\2023-12-13-08-34-33_forest-100-45"
+                     r"\bin\mia-result\2023-12-13-10-25-05_forest-300-30"
     folder_path_A = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
-                    r"\bin\mia-result\2023-12-06-10-12-32_B0.5"
+                    r"\bin\mia-result\2023-12-06-10-35-03_B0.4"
 
     all_files_ML = os.listdir(folder_path_ML)
     all_files_A = os.listdir(folder_path_A)
