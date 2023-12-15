@@ -85,7 +85,7 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
         label_array = sitk.GetArrayFromImage(label_image)
         for key in atlas_labels.keys():
             atlas_label_image = sitk.GetArrayFromImage(transformed_labels[key])
-            label_array[atlas_label_image >= 0.5] = key # try changing 0.5 to something else to check how well this works!
+            label_array[atlas_label_image >= 0.35] = key # try changing 0.5 to something else to check how well this works!
 
         label_image = sitk.GetImageFromArray(label_array)
 

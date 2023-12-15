@@ -5,7 +5,7 @@ import os
 
 def main():
     folder_path_ML = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
-                     r"\bin\mia-result\2023-12-13-10-25-05_forest-300-30"
+                     r"\bin\mia-result\2023-12-13-10-25-05_forest-300-30-BEST"
     folder_path_A = r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer" \
                     r"\bin\mia-result\2023-12-06-10-35-03_B0.4"
 
@@ -38,23 +38,41 @@ def main():
         combined_data = pd.concat([filtered_df_ML, filtered_df_A])
 
         # Set up the figure and subplots
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(5, 12))
 
         # Create box plots for Dice coefficients comparing _ML and _A data
         sns.boxplot(x='LABEL', y='DICE', hue='Type', data=combined_data, ax=axes[0], gap=0)
         axes[0].set_title('Dice Coefficients Comparison')
         axes[0].set_ylabel('Dice Coefficient')
-        axes[0].set_xlabel('Label')
+        axes[0].set_xlabel('')
         axes[0].set_ylim(bottom=0, top=1)  # Set lower and upper limit of y-axis
         axes[0].legend(title='Type')
+
+        # Adding horizontal lines to the first plot (Dice Coefficients Comparison)
+        for y_value in [i / 10 for i in range(1, 11)]:
+            axes[0].axhline(y=y_value, color='gray', linestyle='-', alpha=0.1, label=f'Threshold: {y_value}')
+
+        # Adding vertical lines to separate labels in the first plot
+        for i in range(len(labels) - 1):
+            axes[0].axvline(x=i + 0.5, color='black', linestyle='--', alpha=0.1)
 
         # Create box plots for Hausdorff distances comparing _ML and _A data
         sns.boxplot(x='LABEL', y='HDRFDST', hue='Type', data=combined_data, ax=axes[1], gap=0)
         axes[1].set_title('Hausdorff Distances Comparison')
         axes[1].set_ylabel('Hausdorff Distance')
-        axes[1].set_xlabel('Label')
+        axes[1].set_xlabel('')
         axes[1].set_ylim(bottom=0)  # Set lower limit of y-axis
         axes[1].legend(title='Type')
+
+        # Adding horizontal lines at intervals of 10 from y = 10 to y = 70 in the second plot
+        for y_value in range(10, 71, 10):
+            axes[1].axhline(y=y_value, color='gray', linestyle='-', alpha=0.1, label=f'Threshold: {y_value}')
+
+        # Adding vertical lines to separate labels in the second plot
+        for i in range(len(labels) - 1):
+            axes[1].axvline(x=i + 0.5, color='black', linestyle='--', alpha=0.1)
+
+        plt.subplots_adjust(hspace=20)
 
         # Adjust layout and display
         plt.tight_layout()
