@@ -33,7 +33,11 @@ def extract_and_plot_values(folder_paths):
     fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(18, 8))
     axes = axes.flatten()
 
-    x_position = np.arange(0.1, 1.1, 0.1)
+    plt.rc('axes', titlesize=20)  # Title font size
+
+    # Only for ML
+    x_position = [10,20,50,100]
+
 
     # Loop through each label and plot them on separate subplots
     selected_labels = ['GreyMatter', 'Amygdala', 'Hippocampus', 'Thalamus', 'WhiteMatter']
@@ -44,18 +48,18 @@ def extract_and_plot_values(folder_paths):
         sns.pointplot(x=x_position, y='DICE', data=label_data, color='blue', ax=axes[i], native_scale=True)
         axes[i].set_title(f'{label}')
         axes[i].set_xlabel('')
-        axes[0].set_ylabel('DICE Values')
+        axes[0].set_ylabel('DICE Values',fontsize=20)
         axes[i].set_ylabel('')
         axes[i].set_ylim(0, 1)  # Set the y-axis limits for DICE to 0 to 1
-        axes[i].set_xlim(0, 1)
+        axes[i].set_xlim(0, 110)
 
         # Hausdorff values plot
         sns.pointplot(x=x_position, y='HDRFDST', data=label_data, color='red', ax=axes[i + 5], native_scale=True)
         axes[i + 5].set_xlabel('')
-        axes[5].set_ylabel('Hausdorff Values')
+        axes[5].set_ylabel('Hausdorff Values', fontsize=20)
         axes[i + 5].set_ylabel('')
-        axes[i + 5].set_ylim(0, 30)  # Set the y-axis limits for Hausdorff to 0 to 100
-        axes[i + 5].set_xlim(0, 1)
+        axes[i + 5].set_ylim(0, 70)  # Set the y-axis limits for Hausdorff to 0 to 100
+        axes[i + 5].set_xlim(0, 110)
 
     plt.tight_layout()
     plt.show()
@@ -63,25 +67,14 @@ def extract_and_plot_values(folder_paths):
 if __name__ == "__main__":
     folder_paths = [
         r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-39-05_B0.1",
+        r"\2023-12-15-11-30-50_forest-10-30",
         r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-37-51_B0.2",
+        r"\2023-12-15-11-41-44_forest-20-30",
         r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-36-33_B0.3",
+        r"\2023-12-15-12-02-32_forest-50-30",
         r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-35-03_B0.4",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-12-32_B0.5",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-25-16_B0.6",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-30-13_B0.7",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-31-19_B0.8",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-32-21_B0.9",
-        r"C:\Users\stude\OneDrive\Master\3.Semester\Medical Image Analysis Lab\Code\MIALab_Lukas_Studer\bin\mia-result"
-        r"\2023-12-06-10-33-29_B1.0",
+        r"\2023-12-12-17-07-54_forest-100-30"
+
     ]
 
     extract_and_plot_values(folder_paths)
