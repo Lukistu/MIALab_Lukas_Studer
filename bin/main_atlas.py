@@ -77,7 +77,8 @@ def main(result_dir: str, data_atlas_labels_dir: str, data_test_dir: str):
         transformed_labels = {}
         transform_matrix = img.transformation.GetInverse()
         for key in atlas_labels.keys():
-            transformed_labels[key] = sitk.Resample(atlas_labels[key], img.images[structure.BrainImageTypes.T1w], transform_matrix, sitk.sitkNearestNeighbor)
+            transformed_labels[key] = sitk.Resample(atlas_labels[key], img.images[structure.BrainImageTypes.T1w],
+                                                    transform_matrix, sitk.sitkNearestNeighbor)
 
         # -- COMBINE TRANSFORMED ATLAS LABELS --
         # Learn about handling sitk image data here: https://simpleitk.org/SimpleITK-Notebooks/01_Image_Basics.html
